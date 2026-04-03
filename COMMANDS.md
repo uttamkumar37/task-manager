@@ -28,11 +28,11 @@ Quick-copy commands for day-to-day development on this project.
 ```bash
 java -version          # OpenJDK 17.0.18
 mvn -version           # Apache Maven 3.9.12
-node -v                # v24.13.1
-npm -v                 # 11.8.0
-git --version          # git version 2.x
+node -v                # v20.20.2
+npm -v                 # 10.8.2
+git --version          # git version 2.39.5 (Apple Git-154)
 docker --version       # Docker 29.3.1
-docker compose version # Docker Compose v2.x
+docker compose version # Docker Compose v5.1.1
 ```
 
 ---
