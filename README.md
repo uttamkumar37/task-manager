@@ -8,9 +8,75 @@ Monorepo-style project with separate backend and frontend apps.
 |--------|-----------------------|
 | Java   | OpenJDK 17.0.18       |
 | Maven  | 3.9.12                |
-| Node   | 24.13.1               |
-| NPM    | 11.8.0                |
+| Node   | 20.20.2               |
+| NPM    | 10.8.2                |
+| Git    | 2.39.5 (Apple Git-154) |
 | Docker | 29.3.1                |
+| Docker Compose | v5.1.1         |
+
+## Full Docker workflow (backend)
+
+Run these commands from `backend/` unless noted.
+
+```bash
+# Optional preflight
+docker --version
+docker compose version
+docker ps
+lsof -i :8080
+
+# Optional fresh cleanup (DANGER: removes unused Docker resources)
+docker system prune -a
+
+# Build jar and image
+mvn clean package -DskipTests
+docker build -t task-manager .
+
+# Run
+docker run -d -p 8080:8080 --name task-manager task-manager
+
+# Verify + logs
+docker ps
+docker logs -f task-manager
+
+# API check
+curl http://localhost:8080/api/tasks
+
+# Stop + remove
+docker stop task-manager
+docker rm task-manager
+
+# Rebuild loop after code changes
+mvn clean package -DskipTests
+docker build -t task-manager .
+docker rm -f task-manager
+docker run -d -p 8080:8080 --name task-manager task-manager
+```
+
+For full command sets (Git, Maven, Docker, Compose), use `COMMANDS.md`.
+
+## IntelliJ workflow (backend)
+
+Use IntelliJ when you want to run backend without Docker:
+
+1. Open `backend` in IntelliJ and reload `pom.xml` as Maven project.
+2. Build once:
+
+```bash
+cd /Users/uttamkumar/uttam-all-data/01_github-projects/task-manager/backend
+mvn clean package -DskipTests
+```
+
+3. Run `TaskManagerApplication.java` from IntelliJ (Run or Debug).
+4. Verify startup and test API:
+
+```bash
+curl http://localhost:8080/api/tasks
+```
+
+If `8080` is in use (for example Docker), set `server.port=8081` in `backend/src/main/resources/application.properties`.
+
+Detailed IDE steps are in `backend/README.md`, and quick command copy is in `COMMANDS.md`.
 
 ## Docker image (backend)
 

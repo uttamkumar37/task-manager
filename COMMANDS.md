@@ -16,6 +16,8 @@ Quick-copy commands for day-to-day development on this project.
 - [Git — stash](#git--stash)
 - [Git — tag](#git--tag)
 - [Maven — build & test](#maven--build--test)
+- [IntelliJ IDEA — Spring Boot workflow (backend)](#intellij-idea--spring-boot-workflow-backend)
+- [Docker — full backend workflow (Spring Boot)](#docker--full-backend-workflow-spring-boot)
 - [Docker — image](#docker--image)
 - [Docker — container](#docker--container)
 - [Docker Compose — start & stop project](#docker-compose--start--stop-project)
@@ -276,6 +278,105 @@ mvn clean
 
 ---
 
+## IntelliJ IDEA — Spring Boot workflow (backend)
+
+```bash
+# 1) Open project in IntelliJ
+# Open folder: backend
+
+# 2) Reload Maven project
+# Right-click pom.xml -> Reload Maven Project
+
+# 3) Build from terminal (optional but recommended)
+cd backend
+mvn clean package -DskipTests
+
+# 4) Run app in IntelliJ
+# Open TaskManagerApplication.java and click Run
+
+# 5) Verify app started
+# Check console: Tomcat started on port(s): 8080
+
+# 6) Test API
+curl http://localhost:8080/api/tasks
+
+# 7) Stop app
+# Click Stop in IntelliJ
+
+# 8) Rebuild after code changes
+cd backend
+mvn clean package -DskipTests
+# Run again from IntelliJ
+
+# 9) Debug mode
+# Click Debug, place breakpoints, inspect variables
+
+# 10) Check errors
+# Review IntelliJ Run/Debug console for compile/runtime errors
+```
+
+If Docker is already using `8080`, set backend port in `backend/src/main/resources/application.properties`:
+
+```bash
+server.port=8081
+```
+
+Daily short flow: `Open backend -> Run -> Test -> Stop`
+
+Flow summary: `Code -> IntelliJ Run -> Spring Boot Start -> API -> Test`
+
+---
+
+## Docker — full backend workflow (Spring Boot)
+
+```bash
+# Go to backend
+cd backend
+
+# Optional fresh cleanup (DANGER: removes unused images/containers/networks)
+docker system prune -a
+
+# Build jar
+mvn clean package -DskipTests
+
+# Build image
+docker build -t task-manager .
+
+# Run container
+docker run -d -p 8080:8080 --name task-manager task-manager
+
+# Verify running
+docker ps
+
+# Follow logs
+docker logs -f task-manager
+
+# Quick test
+curl http://localhost:8080/api/tasks
+
+# Stop + remove container
+docker stop task-manager
+docker rm task-manager
+
+# Rebuild after code change
+mvn clean package -DskipTests
+docker build -t task-manager .
+docker rm -f task-manager
+docker run -d -p 8080:8080 --name task-manager task-manager
+
+# Optional cleanup image
+docker rmi task-manager
+
+# Debug helpers
+docker logs task-manager
+docker ps -a
+docker images
+```
+
+Flow: `Code -> Maven Build -> JAR -> Docker Build -> Container Run -> Logs -> Test`
+
+---
+
 ## Docker — image
 
 ```bash
@@ -293,7 +394,7 @@ docker images
 docker rmi task-manager-backend:latest
 
 # Remove all unused images
-docker image prune -a
+docker image prune -a   # DANGER: removes all unused local images
 ```
 
 ---
