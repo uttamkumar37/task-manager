@@ -64,31 +64,39 @@ See **[COMMANDS.md](COMMANDS.md)** for a full copy-paste reference covering:
 
 ```text
 task-manager/
+│
 ├── .github/
 │   └── workflows/
+│
 ├── backend/
-│   ├── pom.xml
-│   └── src/
-│       ├── main/
-│       │   ├── java/backend/
-│       │   │   ├── controller/
-│       │   │   ├── dto/
-│       │   │   ├── model/
-│       │   │   ├── repository/
-│       │   │   ├── service/
-│       │   │   └── TaskManagerApplication.java
-│       │   └── resources/
-│       └── test/
-│           ├── java/
-│           └── resources/
+│   ├── src/
+│   │   ├── main/
+│   │   │   ├── java/backend/
+│   │   │   │   ├── controller/
+│   │   │   │   ├── dto/
+│   │   │   │   ├── model/
+│   │   │   │   ├── repository/
+│   │   │   │   ├── service/
+│   │   │   │   └── TaskManagerApplication.java
+│   │   │   └── resources/
+│   │   └── test/
+│   │       ├── java/
+│   │       └── resources/
+│   ├── Dockerfile
+│   └── pom.xml
+│
 ├── frontend/
 │   ├── public/
-│   └── src/
-│       ├── assets/
-│       ├── components/
-│       ├── pages/
-│       └── services/
+│   ├── src/
+│   │   ├── assets/
+│   │   ├── components/
+│   │   ├── pages/
+│   │   └── services/
+│   └── package.json
+│
 ├── docker-compose.yml
+├── .gitignore
+├── COMMANDS.md
 └── README.md
 ```
 
