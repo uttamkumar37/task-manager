@@ -1,0 +1,9 @@
+services:
+  backend:
+    container_name: task-manager-backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: task-manager-backend:latest
+    ports:
+      - "8080:8080"

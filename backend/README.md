@@ -2,6 +2,52 @@
 
 Minimal runnable backend for Task Manager.
 
+## Prerequisites
+
+| Tool   | Version used    |
+|--------|-----------------|
+| Java   | OpenJDK 17.0.18 |
+| Maven  | 3.9.12          |
+| Docker | 29.3.1          |
+
+## Docker image
+
+The backend includes a `Dockerfile` that runs the packaged Spring Boot jar.
+
+Build jar + Docker image:
+
+```bash
+cd /Users/uttamkumar/uttam-all-data/01_github-projects/task-manager/backend
+mvn clean package
+docker build -t task-manager-backend:latest .
+```
+
+Run container:
+
+```bash
+docker run --rm -p 8080:8080 task-manager-backend:latest
+```
+
+API base URL: `http://localhost:8080/api/tasks`.
+
+## Docker Compose (from repo root)
+
+The repo-level `docker-compose.yml` includes a `backend` service that builds this Docker image.
+
+Package the jar first (required by current `Dockerfile`):
+
+```bash
+cd /Users/uttamkumar/uttam-all-data/01_github-projects/task-manager/backend
+mvn clean package
+```
+
+Run with Compose:
+
+```bash
+cd /Users/uttamkumar/uttam-all-data/01_github-projects/task-manager
+docker compose up --build
+```
+
 ## Canonical backend layout
 
 ```text
