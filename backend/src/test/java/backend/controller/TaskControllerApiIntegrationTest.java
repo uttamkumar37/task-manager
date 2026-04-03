@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
@@ -18,6 +19,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -43,7 +45,7 @@ class TaskControllerApiIntegrationTest {
     void createAndGetById_shouldReturnCreatedTask() throws Exception {
         long id = createTask("Learn Spring", "Task APIs", "PENDING");
 
-        mockMvc.perform(get("/api/tasks/{id}", id))
+        mockMvc.perform(get("/api/tasks/{id}", id).with(auth()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(id))
                 .andExpect(jsonPath("$.title").value("Learn Spring"))
@@ -55,7 +57,7 @@ class TaskControllerApiIntegrationTest {
         createTask("T1", "D1", "PENDING");
         createTask("T2", "D2", "DONE");
 
-        mockMvc.perform(get("/api/tasks"))
+        mockMvc.perform(get("/api/tasks").with(auth()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(2)));
     }
@@ -73,6 +75,7 @@ class TaskControllerApiIntegrationTest {
                 """;
 
         mockMvc.perform(put("/api/tasks/{id}", id)
+                        .with(auth())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(updateJson))
                 .andExpect(status().isOk())
@@ -85,10 +88,10 @@ class TaskControllerApiIntegrationTest {
     void delete_shouldReturnNoContent() throws Exception {
         long id = createTask("Delete me", "To delete", "PENDING");
 
-        mockMvc.perform(delete("/api/tasks/{id}", id))
+        mockMvc.perform(delete("/api/tasks/{id}", id).with(auth()))
                 .andExpect(status().isNoContent());
 
-        mockMvc.perform(get("/api/tasks/{id}", id))
+        mockMvc.perform(get("/api/tasks/{id}", id).with(auth()))
                 .andExpect(status().isNotFound());
     }
 
@@ -96,11 +99,11 @@ class TaskControllerApiIntegrationTest {
     void patchCompleteAndPending_shouldToggleStatus() throws Exception {
         long id = createTask("Toggle", "Toggle status", "PENDING");
 
-        mockMvc.perform(patch("/api/tasks/{id}/complete", id))
+        mockMvc.perform(patch("/api/tasks/{id}/complete", id).with(auth()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("DONE"));
 
-        mockMvc.perform(patch("/api/tasks/{id}/pending", id))
+        mockMvc.perform(patch("/api/tasks/{id}/pending", id).with(auth()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("PENDING"));
     }
@@ -111,7 +114,7 @@ class TaskControllerApiIntegrationTest {
         createTask("Shopping", "Buy milk and bread", "DONE");
         createTask("Workout", "Morning cardio", "PENDING");
 
-        mockMvc.perform(get("/api/tasks/search").param("keyword", "milk"))
+        mockMvc.perform(get("/api/tasks/search").with(auth()).param("keyword", "milk"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].title").value("Shopping"));
@@ -123,7 +126,7 @@ class TaskControllerApiIntegrationTest {
         createTask("D1", "Done 1", "DONE");
         createTask("P2", "Pending 2", "PENDING");
 
-        mockMvc.perform(get("/api/tasks").param("status", "PENDING"))
+        mockMvc.perform(get("/api/tasks").with(auth()).param("status", "PENDING"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(2)))
                 .andExpect(jsonPath("$[0].status").value("PENDING"));
@@ -135,7 +138,7 @@ class TaskControllerApiIntegrationTest {
         createTask("D1", "Done 1", "DONE");
         createTask("P2", "Pending 2", "PENDING");
 
-        mockMvc.perform(get("/api/tasks/stats"))
+        mockMvc.perform(get("/api/tasks/stats").with(auth()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.total").value(3))
                 .andExpect(jsonPath("$.pending").value(2))
@@ -144,20 +147,26 @@ class TaskControllerApiIntegrationTest {
 
     @Test
     void invalidStatusFilter_shouldReturnBadRequest() throws Exception {
-        mockMvc.perform(get("/api/tasks").param("status", "IN_PROGRESS"))
+        mockMvc.perform(get("/api/tasks").with(auth()).param("status", "IN_PROGRESS"))
                 .andExpect(status().isBadRequest());
     }
 
     @Test
     void blankSearchKeyword_shouldReturnBadRequest() throws Exception {
-        mockMvc.perform(get("/api/tasks/search").param("keyword", "   "))
+        mockMvc.perform(get("/api/tasks/search").with(auth()).param("keyword", "   "))
                 .andExpect(status().isBadRequest());
     }
 
     @Test
     void missingTask_shouldReturnNotFound() throws Exception {
-        mockMvc.perform(get("/api/tasks/{id}", 9999L))
+        mockMvc.perform(get("/api/tasks/{id}", 9999L).with(auth()))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void unauthenticatedRequest_shouldReturnUnauthorized() throws Exception {
+        mockMvc.perform(get("/api/tasks"))
+                .andExpect(status().isUnauthorized());
     }
 
     private long createTask(String title, String description, String statusValue) throws Exception {
@@ -170,6 +179,7 @@ class TaskControllerApiIntegrationTest {
                 """.formatted(title, description, statusValue);
 
         MvcResult result = mockMvc.perform(post("/api/tasks")
+                        .with(auth())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestJson))
                 .andExpect(status().isCreated())
@@ -177,6 +187,10 @@ class TaskControllerApiIntegrationTest {
 
         JsonNode body = objectMapper.readTree(result.getResponse().getContentAsString());
         return body.get("id").asLong();
+    }
+
+    private RequestPostProcessor auth() {
+        return httpBasic("admin", "admin123");
     }
 }
 

@@ -126,6 +126,10 @@ See **[COMMANDS.md](COMMANDS.md)** for a full copy-paste reference covering:
 - Docker Compose start / stop / logs
 - Local (no-Docker) project start and stop
 
+## Authentication guide
+
+For complete authentication theory and Spring Boot implementation guidance (Basic, Session, JWT, OAuth2/OIDC/SSO), see `AUTHENTICATION.md`.
+
 ## Project structure
 
 ```text
