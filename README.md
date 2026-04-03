@@ -50,6 +50,16 @@ cd /Users/uttamkumar/uttam-all-data/01_github-projects/task-manager
 docker compose down
 ```
 
+## Commands reference
+
+See **[COMMANDS.md](COMMANDS.md)** for a full copy-paste reference covering:
+- Version checks (Java, Maven, Node, NPM, Docker)
+- Git setup, commit, push, pull, branch, reset, stash, tag
+- Maven build and test
+- Docker image and container lifecycle
+- Docker Compose start / stop / logs
+- Local (no-Docker) project start and stop
+
 ## Project structure
 
 ```text
