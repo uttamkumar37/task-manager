@@ -30,7 +30,7 @@ docker run --rm -p 8080:8080 task-manager-backend:latest
 
 API base URL: `http://localhost:8080/api/tasks`.
 
-Default Basic Auth credentials:
+Default login credentials:
 
 - Username: `admin`
 - Password: `admin123`
@@ -137,7 +137,11 @@ mvn clean package -DskipTests
 6. Test API:
 
 ```bash
-curl -u admin:admin123 http://localhost:8080/api/tasks
+curl -i -c cookies.txt -X POST http://localhost:8080/api/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"username":"admin","password":"admin123"}'
+
+curl -i -b cookies.txt http://localhost:8080/api/tasks
 ```
 
 7. Stop app with IntelliJ **Stop** button.
@@ -184,7 +188,13 @@ For complete authentication theory and implementation patterns for Spring Boot (
 
 ## API endpoints
 
-All `/api/tasks/**` endpoints require HTTP Basic authentication.
+All `/api/tasks/**` endpoints require an authenticated session.
+
+```text
+POST    /api/auth/login
+POST    /api/auth/logout
+GET     /api/auth/me
+```
 
 ```text
 POST    /api/tasks
@@ -205,30 +215,34 @@ GET     /api/tasks/stats
 ## Quick API test with curl
 
 ```bash
-AUTH="admin:admin123"
+curl -i -c cookies.txt -X POST http://localhost:8080/api/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"username":"admin","password":"admin123"}'
 
-curl -i -u "$AUTH" -X POST http://localhost:8080/api/tasks \
+curl -i -b cookies.txt -X POST http://localhost:8080/api/tasks \
   -H 'Content-Type: application/json' \
   -d '{"title":"Learn Spring","description":"Build task APIs","status":"PENDING"}'
 
-curl -i -u "$AUTH" http://localhost:8080/api/tasks
+curl -i -b cookies.txt http://localhost:8080/api/tasks
 
-curl -i -u "$AUTH" http://localhost:8080/api/tasks/1
+curl -i -b cookies.txt http://localhost:8080/api/tasks/1
 
-curl -i -u "$AUTH" -X PUT http://localhost:8080/api/tasks/1 \
+curl -i -b cookies.txt -X PUT http://localhost:8080/api/tasks/1 \
   -H 'Content-Type: application/json' \
   -d '{"title":"Learn Spring Boot","description":"CRUD done","status":"DONE"}'
 
-curl -i -u "$AUTH" -X PATCH http://localhost:8080/api/tasks/1/complete
+curl -i -b cookies.txt -X PATCH http://localhost:8080/api/tasks/1/complete
 
-curl -i -u "$AUTH" -X PATCH http://localhost:8080/api/tasks/1/pending
+curl -i -b cookies.txt -X PATCH http://localhost:8080/api/tasks/1/pending
 
-curl -i -u "$AUTH" "http://localhost:8080/api/tasks/search?keyword=spring"
+curl -i -b cookies.txt "http://localhost:8080/api/tasks/search?keyword=spring"
 
-curl -i -u "$AUTH" "http://localhost:8080/api/tasks?status=PENDING"
+curl -i -b cookies.txt "http://localhost:8080/api/tasks?status=PENDING"
 
-curl -i -u "$AUTH" http://localhost:8080/api/tasks/stats
+curl -i -b cookies.txt http://localhost:8080/api/tasks/stats
 
-curl -i -u "$AUTH" -X DELETE http://localhost:8080/api/tasks/1
+curl -i -b cookies.txt -X DELETE http://localhost:8080/api/tasks/1
+
+curl -i -b cookies.txt -X POST http://localhost:8080/api/auth/logout
 ```
 
