@@ -1,0 +1,22 @@
+# macOS
+.DS_Store
+
+# IDE
+.idea/
+*.iml
+
+# Logs
+*.log
+
+# Env
+.env
+.env.*
+
+# Node
+node_modules/
+
+# Build outputs
+backend/target/
+frontend/dist/
+frontend/build/
+
