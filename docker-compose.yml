@@ -55,7 +55,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8080}
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-https://task-manager-backend-51pf.onrender.com}
     image: task-manager-frontend:latest
     ports:
       - "5173:5173"

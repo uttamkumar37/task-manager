@@ -168,15 +168,16 @@ Task endpoints:
 ## Quick API Check (with session cookie)
 
 ```bash
-curl -i -c cookies.txt -X POST http://localhost:8080/api/auth/login \
+curl -i -c cookies.txt -X POST https://task-manager-backend-51pf.onrender.com/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"username":"admin","password":"admin123"}'
 
-curl -i -b cookies.txt http://localhost:8080/api/tasks
+curl -i -b cookies.txt https://task-manager-backend-51pf.onrender.com/api/tasks
 ```
 
 ## Notes
 
 - Database: PostgreSQL only (configured in `docker-compose.yml` and backend `application.properties`)
+- Frontend API backend: `https://task-manager-backend-51pf.onrender.com` (set `VITE_API_BASE_URL` in `.env` to override)
 - If frontend cannot call backend, verify `VITE_API_BASE_URL` and backend CORS settings in `backend/src/main/java/backend/security/SecurityConfig.java`
 - Backend-specific details are in `backend/README.md`; frontend-specific details are in `frontend/README.md`

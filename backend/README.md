@@ -63,7 +63,7 @@ docker run -d -p 8080:8080 --name task-manager task-manager
 # Verify and inspect
 docker ps
 docker logs -f task-manager
-curl http://localhost:8080/api/tasks
+curl https://task-manager-backend-51pf.onrender.com/api/tasks
 
 # Stop and remove
 docker stop task-manager
@@ -216,33 +216,33 @@ GET     /api/tasks/stats
 ## Quick API test with curl
 
 ```bash
-curl -i -c cookies.txt -X POST http://localhost:8080/api/auth/login \
+curl -i -c cookies.txt -X POST https://task-manager-backend-51pf.onrender.com/api/auth/login \
   -H 'Content-Type: application/json' \
   -d '{"username":"admin","password":"admin123"}'
 
-curl -i -b cookies.txt -X POST http://localhost:8080/api/tasks \
+curl -i -b cookies.txt -X POST https://task-manager-backend-51pf.onrender.com/api/tasks \
   -H 'Content-Type: application/json' \
   -d '{"title":"Learn Spring","description":"Build task APIs","status":"PENDING"}'
 
-curl -i -b cookies.txt http://localhost:8080/api/tasks
+curl -i -b cookies.txt https://task-manager-backend-51pf.onrender.com/api/tasks
 
-curl -i -b cookies.txt http://localhost:8080/api/tasks/1
+curl -i -b cookies.txt https://task-manager-backend-51pf.onrender.com/api/tasks/1
 
-curl -i -b cookies.txt -X PUT http://localhost:8080/api/tasks/1 \
+curl -i -b cookies.txt -X PUT https://task-manager-backend-51pf.onrender.com/api/tasks/1 \
   -H 'Content-Type: application/json' \
   -d '{"title":"Learn Spring Boot","description":"CRUD done","status":"DONE"}'
 
-curl -i -b cookies.txt -X PATCH http://localhost:8080/api/tasks/1/complete
+curl -i -b cookies.txt -X PATCH https://task-manager-backend-51pf.onrender.com/api/tasks/1/complete
 
-curl -i -b cookies.txt -X PATCH http://localhost:8080/api/tasks/1/pending
+curl -i -b cookies.txt -X PATCH https://task-manager-backend-51pf.onrender.com/api/tasks/1/pending
 
-curl -i -b cookies.txt "http://localhost:8080/api/tasks/search?keyword=spring"
+curl -i -b cookies.txt "https://task-manager-backend-51pf.onrender.com/api/tasks/search?keyword=spring"
 
-curl -i -b cookies.txt "http://localhost:8080/api/tasks?status=PENDING"
+curl -i -b cookies.txt "https://task-manager-backend-51pf.onrender.com/api/tasks?status=PENDING"
 
-curl -i -b cookies.txt http://localhost:8080/api/tasks/stats
+curl -i -b cookies.txt https://task-manager-backend-51pf.onrender.com/api/tasks/stats
 
-curl -i -b cookies.txt -X DELETE http://localhost:8080/api/tasks/1
+curl -i -b cookies.txt -X DELETE https://task-manager-backend-51pf.onrender.com/api/tasks/1
 
-curl -i -b cookies.txt -X POST http://localhost:8080/api/auth/logout
+curl -i -b cookies.txt -X POST https://task-manager-backend-51pf.onrender.com/api/auth/logout
 ```
