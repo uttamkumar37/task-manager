@@ -61,11 +61,34 @@ npm run preview
 ### Docker (optional)
 
 ```bash
-cd /Users/uttamkumar/uttam-all-data/01_github-projects/task-manager/backend
-mvn clean package -DskipTests
-
 cd /Users/uttamkumar/uttam-all-data/01_github-projects/task-manager
-docker compose up --build
+
+# backend change
+cd backend
+mvn clean package -DskipTests
+cd ..
+docker compose up -d --build backend
+
+# frontend change
+cd frontend
+npm run build
+cd ..
+docker compose up -d --build frontend
+
+# full rebuild
+docker compose up -d --build
+
+# verify
+docker ps
+
+# debug if needed
+docker compose logs -f
+
+# just restart
+docker compose down && docker compose up -d
+
+# stop
+docker compose down
 ```
 
 ## Authentication
