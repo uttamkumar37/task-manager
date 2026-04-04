@@ -22,6 +22,20 @@ mvn spring-boot:run
 
 Backend: `http://localhost:8080`
 
+If backend startup fails with `FATAL: role "postgres" does not exist`, run this one-time local PostgreSQL setup:
+
+```bash
+psql -h localhost -p 5432 -d postgres -c "CREATE ROLE postgres WITH LOGIN SUPERUSER PASSWORD 'postgres123';"
+createdb -h localhost -p 5432 -O postgres taskdb
+```
+
+Then start backend again:
+
+```bash
+cd /Users/uttamkumar/uttam-all-data/01_github-projects/task-manager/backend
+mvn spring-boot:run
+```
+
 ### 2) Run frontend
 
 ```bash
@@ -37,13 +51,13 @@ Frontend: `http://localhost:5173`
 Create `frontend/.env`:
 
 ```env
-VITE_API_URL=http://localhost:8080
+VITE_API_BASE_URL=http://localhost:8080
 ```
 
 For production (Vercel), set:
 
 ```env
-VITE_API_URL=https://<your-backend>.onrender.com
+VITE_API_BASE_URL=https://<your-backend>.onrender.com
 ```
 
 ## Common Commands
@@ -68,6 +82,9 @@ npm run preview
 
 ```bash
 cd /Users/uttamkumar/uttam-all-data/01_github-projects/task-manager
+
+# first-time setup
+cp .env.example .env
 
 # backend change
 cd backend
@@ -96,6 +113,14 @@ docker compose down && docker compose up -d
 # stop
 docker compose down
 ```
+
+Root `.env` values used by Compose:
+
+- `DB_NAME`, `DB_USER`, `DB_PASSWORD`
+- `TASK_MANAGER_AUTH_USERNAME`, `TASK_MANAGER_AUTH_PASSWORD`, `TASK_MANAGER_AUTH_ROLE`
+- `TASK_MANAGER_CORS_ALLOWED_ORIGINS`
+- `VITE_API_BASE_URL` (baked into frontend image at build time)
+- `JWT_SECRET`, `JWT_EXPIRATION_MS` (optional)
 
 ## Authentication
 
@@ -152,6 +177,6 @@ curl -i -b cookies.txt http://localhost:8080/api/tasks
 
 ## Notes
 
-- H2 console: `http://localhost:8080/h2-console`
-- If frontend cannot call backend, verify `VITE_API_URL` and backend CORS settings in `backend/src/main/java/backend/security/SecurityConfig.java`
+- Database: PostgreSQL only (configured in `docker-compose.yml` and backend `application.properties`)
+- If frontend cannot call backend, verify `VITE_API_BASE_URL` and backend CORS settings in `backend/src/main/java/backend/security/SecurityConfig.java`
 - Backend-specific details are in `backend/README.md`; frontend-specific details are in `frontend/README.md`
