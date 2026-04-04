@@ -2,6 +2,9 @@ package backend.controller;
 
 import backend.dto.AuthResponseDTO;
 import backend.dto.LoginRequestDTO;
+import backend.dto.RegisterRequestDTO;
+import backend.model.AppUser;
+import backend.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.http.HttpStatus;
@@ -13,6 +16,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -27,9 +31,39 @@ import java.util.Objects;
 public class AuthController {
 
     private final AuthenticationManager authenticationManager;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public AuthController(AuthenticationManager authenticationManager) {
+    public AuthController(
+            AuthenticationManager authenticationManager,
+            UserRepository userRepository,
+            PasswordEncoder passwordEncoder
+    ) {
         this.authenticationManager = authenticationManager;
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<AuthResponseDTO> register(@RequestBody RegisterRequestDTO registerRequest) {
+        String username = registerRequest.getUsername();
+        String password = registerRequest.getPassword();
+
+        if (isBlank(username) || isBlank(password)) {
+            return ResponseEntity.badRequest().body(new AuthResponseDTO("Username and password are required", null, null));
+        }
+
+        String normalizedUsername = username.trim();
+        if (userRepository.existsByUsername(normalizedUsername)) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(new AuthResponseDTO("Username already exists", null, null));
+        }
+
+        AppUser user = new AppUser(normalizedUsername, passwordEncoder.encode(password), "ROLE_USER");
+        userRepository.save(user);
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(new AuthResponseDTO("Registration successful", normalizedUsername, "ROLE_USER"));
     }
 
     @PostMapping("/login")

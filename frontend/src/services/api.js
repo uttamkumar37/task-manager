@@ -1,0 +1,50 @@
+import axios from "axios";
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
+
+const api = axios.create({
+  baseURL: API_BASE_URL,
+  withCredentials: true,
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
+export function toApiError(error, fallbackMessage = "Something went wrong") {
+  if (!error) {
+    return { message: fallbackMessage, status: null };
+  }
+
+  const status = error.response?.status ?? null;
+  const responseData = error.response?.data;
+
+  if (typeof responseData === "string" && responseData.trim()) {
+    return { message: responseData, status };
+  }
+
+  if (responseData?.message) {
+    return { message: responseData.message, status };
+  }
+
+  if (error.message) {
+    return { message: error.message, status };
+  }
+
+  return { message: fallbackMessage, status };
+}
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const status = error.response?.status;
+
+    if (status === 401) {
+      window.dispatchEvent(new CustomEvent("auth:unauthorized"));
+    }
+
+    return Promise.reject(error);
+  }
+);
+
+export default api;
+

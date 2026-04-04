@@ -182,15 +182,16 @@ cd /Users/uttamkumar/uttam-all-data/01_github-projects/task-manager/backend
 mvn test
 ```
 
-## Authentication guide
+## Authentication
 
-For complete authentication theory and implementation patterns for Spring Boot (Basic, Session, JWT, OAuth2/OIDC/SSO), see `../AUTHENTICATION.md`.
+Authentication details are now documented in the root `README.md` under the **Authentication** section.
 
 ## API endpoints
 
 All `/api/tasks/**` endpoints require an authenticated session.
 
 ```text
+POST    /api/auth/register
 POST    /api/auth/login
 POST    /api/auth/logout
 GET     /api/auth/me
@@ -245,4 +246,3 @@ curl -i -b cookies.txt -X DELETE http://localhost:8080/api/tasks/1
 
 curl -i -b cookies.txt -X POST http://localhost:8080/api/auth/logout
 ```
-

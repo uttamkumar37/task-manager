@@ -36,7 +36,9 @@ class TaskControllerApiIntegrationTest {
     @BeforeEach
     void setUp() {
         taskRepository.deleteAll();
-        authSession = login("admin", "admin123");
+        String username = "owner_" + System.nanoTime();
+        register(username, "pass123");
+        authSession = login(username, "pass123");
     }
 
     @Test
@@ -162,6 +164,18 @@ class TaskControllerApiIntegrationTest {
     }
 
     @Test
+    void userShouldNotAccessAnotherUsersTask() throws Exception {
+        long ownerTaskId = createTask("Private", "Only mine", "PENDING");
+
+        String secondUsername = "other_" + System.nanoTime();
+        register(secondUsername, "pass123");
+        MockHttpSession secondSession = login(secondUsername, "pass123");
+
+        mockMvc.perform(get("/api/tasks/{id}", ownerTaskId).session(secondSession))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
     void unauthenticatedRequest_shouldReturnUnauthorized() throws Exception {
         mockMvc.perform(get("/api/tasks"))
                 .andExpect(status().isUnauthorized());
@@ -205,6 +219,24 @@ class TaskControllerApiIntegrationTest {
             return (MockHttpSession) result.getRequest().getSession(false);
         } catch (Exception ex) {
             throw new RuntimeException("Unable to authenticate test session", ex);
+        }
+    }
+
+    private void register(String username, String password) {
+        String registerJson = """
+                {
+                  "username": "%s",
+                  "password": "%s"
+                }
+                """.formatted(username, password);
+
+        try {
+            mockMvc.perform(post("/api/auth/register")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(registerJson))
+                    .andExpect(status().isCreated());
+        } catch (Exception ex) {
+            throw new RuntimeException("Unable to register test user", ex);
         }
     }
 }

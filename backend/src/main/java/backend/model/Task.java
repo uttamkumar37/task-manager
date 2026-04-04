@@ -26,6 +26,9 @@ public class Task {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @Column(nullable = false)
+    private String ownerUsername;
+
     // Allowed values: PENDING / DONE
     @Column(nullable = false)
     private String status;
@@ -37,10 +40,11 @@ public class Task {
     public Task() {
     }
 
-    public Task(Long id, String title, String description, String status, Date createdAt) {
+    public Task(Long id, String title, String description, String ownerUsername, String status, Date createdAt) {
         this.id = id;
         this.title = title;
         this.description = description;
+        this.ownerUsername = ownerUsername;
         this.status = status;
         this.createdAt = createdAt;
     }
@@ -74,6 +78,14 @@ public class Task {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getOwnerUsername() {
+        return ownerUsername;
+    }
+
+    public void setOwnerUsername(String ownerUsername) {
+        this.ownerUsername = ownerUsername;
     }
 
     public String getStatus() {

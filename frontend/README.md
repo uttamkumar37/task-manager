@@ -1,14 +1,50 @@
-# Frontend
+# Task Manager Frontend
 
-This folder is prepared with a standard UI project layout.
+Production-ready React (Vite) frontend for the Spring Boot backend in this repository.
 
-## Current structure
+## Features
 
-- `public/` static files
-- `src/components/` reusable UI components
-- `src/pages/` route-level pages
-- `src/services/` API and data-access layer
-- `src/assets/` images, icons, fonts
+- Session-based authentication (`withCredentials: true`)
+- Login page with loading and error states
+- Protected dashboard route
+- Task CRUD (create, edit, delete)
+- Status filter (`ALL`, `PENDING`, `DONE`)
+- Global Axios error handling via interceptors
 
-You can scaffold React/Vite or Next.js into this folder in the next step.
+## Tech Stack
+
+- React + Vite
+- React Router
+- Axios
+- Hooks + functional components
+
+## Environment
+
+Create `.env` in this folder (or copy from `.env.example`):
+
+```env
+VITE_API_BASE_URL=http://localhost:8080
+```
+
+## Run
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+## Build Check
+
+```bash
+cd frontend
+npm run build
+```
+
+## Default Local Auth User
+
+Based on backend defaults in `backend/src/main/java/backend/security/SecurityConfig.java` and `application.properties`:
+
+- Username: `admin`
+- Password: `admin123`
 

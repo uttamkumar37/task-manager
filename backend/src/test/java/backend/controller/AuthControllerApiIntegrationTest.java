@@ -22,18 +22,39 @@ class AuthControllerApiIntegrationTest {
     private MockMvc mockMvc;
 
     @Test
+    void register_shouldCreateAccount() throws Exception {
+        String username = "user_" + System.nanoTime();
+
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "username": "%s",
+                                  "password": "pass123"
+                                }
+                                """.formatted(username)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.message").value("Registration successful"))
+                .andExpect(jsonPath("$.username").value(username))
+                .andExpect(jsonPath("$.role").value("ROLE_USER"));
+    }
+
+    @Test
     void login_shouldCreateSessionAndReturnUser() throws Exception {
+        String username = "user_" + System.nanoTime();
+        registerUser(username, "pass123");
+
         MvcResult result = mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                  "username": "admin",
-                                  "password": "admin123"
+                                  "username": "%s",
+                                  "password": "pass123"
                                 }
-                                """))
+                                """.formatted(username)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("Login successful"))
-                .andExpect(jsonPath("$.username").value("admin"))
+                .andExpect(jsonPath("$.username").value(username))
                 .andExpect(jsonPath("$.role").value("ROLE_USER"))
                 .andReturn();
 
@@ -41,7 +62,7 @@ class AuthControllerApiIntegrationTest {
 
         mockMvc.perform(get("/api/auth/me").session(session))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.username").value("admin"));
+                .andExpect(jsonPath("$.username").value(username));
     }
 
     @Test
@@ -60,14 +81,17 @@ class AuthControllerApiIntegrationTest {
 
     @Test
     void logout_shouldInvalidateSession() throws Exception {
+        String username = "user_" + System.nanoTime();
+        registerUser(username, "pass123");
+
         MvcResult login = mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                  "username": "admin",
-                                  "password": "admin123"
+                                  "username": "%s",
+                                  "password": "pass123"
                                 }
-                                """))
+                                """.formatted(username)))
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -79,6 +103,18 @@ class AuthControllerApiIntegrationTest {
 
         mockMvc.perform(get("/api/tasks").session(session))
                 .andExpect(status().isUnauthorized());
+    }
+
+    private void registerUser(String username, String password) throws Exception {
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "username": "%s",
+                                  "password": "%s"
+                                }
+                                """.formatted(username, password)))
+                .andExpect(status().isCreated());
     }
 }
 

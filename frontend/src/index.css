@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Smooth scrollbar */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: #f1f5f9; }
+::-webkit-scrollbar-thumb { background: #c7d2fe; border-radius: 9999px; }
+
+/* Spinner (Tailwind doesn't ship one by default) */
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinner {
+  @apply inline-block w-4 h-4 rounded-full border-2 border-white/40 border-t-white;
+  animation: spin 0.75s linear infinite;
+}
