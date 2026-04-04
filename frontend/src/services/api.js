@@ -7,10 +7,18 @@ const API_URL =
 
 const api = axios.create({
   baseURL: API_URL,
-  withCredentials: true,
   headers: {
     "Content-Type": "application/json",
   },
+});
+
+// Attach JWT token from localStorage to every request
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
 });
 
 export function toApiError(error, fallbackMessage = "Something went wrong") {
@@ -42,6 +50,7 @@ api.interceptors.response.use(
     const status = error.response?.status;
 
     if (status === 401) {
+      localStorage.removeItem("token");
       window.dispatchEvent(new CustomEvent("auth:unauthorized"));
     }
 

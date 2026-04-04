@@ -5,6 +5,7 @@ public class AuthResponseDTO {
     private String message;
     private String username;
     private String role;
+    private String token;
 
     public AuthResponseDTO() {
     }
@@ -13,6 +14,13 @@ public class AuthResponseDTO {
         this.message = message;
         this.username = username;
         this.role = role;
+    }
+
+    public AuthResponseDTO(String message, String username, String role, String token) {
+        this.message = message;
+        this.username = username;
+        this.role = role;
+        this.token = token;
     }
 
     public String getMessage() {
@@ -38,5 +46,12 @@ public class AuthResponseDTO {
     public void setRole(String role) {
         this.role = role;
     }
-}
 
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
+    }
+}

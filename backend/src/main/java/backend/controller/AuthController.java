@@ -5,8 +5,7 @@ import backend.dto.LoginRequestDTO;
 import backend.dto.RegisterRequestDTO;
 import backend.model.AppUser;
 import backend.repository.UserRepository;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
+import backend.security.JwtUtil;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -14,17 +13,13 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -33,15 +28,18 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtUtil jwtUtil;
 
     public AuthController(
             AuthenticationManager authenticationManager,
             UserRepository userRepository,
-            PasswordEncoder passwordEncoder
+            PasswordEncoder passwordEncoder,
+            JwtUtil jwtUtil
     ) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.jwtUtil = jwtUtil;
     }
 
     @PostMapping("/register")
@@ -50,7 +48,8 @@ public class AuthController {
         String password = registerRequest.getPassword();
 
         if (isBlank(username) || isBlank(password)) {
-            return ResponseEntity.badRequest().body(new AuthResponseDTO("Username and password are required", null, null));
+            return ResponseEntity.badRequest()
+                    .body(new AuthResponseDTO("Username and password are required", null, null));
         }
 
         String normalizedUsername = username.trim();
@@ -67,12 +66,13 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponseDTO> login(@RequestBody LoginRequestDTO loginRequest, HttpServletRequest request) {
+    public ResponseEntity<AuthResponseDTO> login(@RequestBody LoginRequestDTO loginRequest) {
         String username = loginRequest.getUsername();
         String password = loginRequest.getPassword();
 
         if (isBlank(username) || isBlank(password)) {
-            return ResponseEntity.badRequest().body(new AuthResponseDTO("Username and password are required", null, null));
+            return ResponseEntity.badRequest()
+                    .body(new AuthResponseDTO("Username and password are required", null, null));
         }
 
         try {
@@ -80,14 +80,12 @@ public class AuthController {
                     new UsernamePasswordAuthenticationToken(username, password)
             );
 
-            SecurityContext context = SecurityContextHolder.createEmptyContext();
-            context.setAuthentication(authentication);
-            SecurityContextHolder.setContext(context);
+            String token = jwtUtil.generateToken(authentication.getName());
+            String role  = firstRole(authentication);
 
-            HttpSession session = request.getSession(true);
-            session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, context);
+            return ResponseEntity.ok(
+                    new AuthResponseDTO("Login successful", authentication.getName(), role, token));
 
-            return ResponseEntity.ok(new AuthResponseDTO("Login successful", authentication.getName(), firstRole(authentication)));
         } catch (BadCredentialsException ex) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new AuthResponseDTO("Invalid username or password", null, null));
@@ -95,13 +93,9 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<AuthResponseDTO> logout(HttpServletRequest request) {
-        HttpSession session = request.getSession(false);
-        if (session != null) {
-            session.invalidate();
-        }
+    public ResponseEntity<AuthResponseDTO> logout() {
+        // JWT is stateless — client removes the token from localStorage
         SecurityContextHolder.clearContext();
-
         return ResponseEntity.ok(new AuthResponseDTO("Logout successful", null, null));
     }
 
@@ -111,8 +105,8 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new AuthResponseDTO("Unauthorized", null, null));
         }
-
-        return ResponseEntity.ok(new AuthResponseDTO("Authenticated user", authentication.getName(), firstRole(authentication)));
+        return ResponseEntity.ok(
+                new AuthResponseDTO("Authenticated user", authentication.getName(), firstRole(authentication)));
     }
 
     private String firstRole(Authentication authentication) {
@@ -122,8 +116,7 @@ public class AuthController {
                 .orElse("ROLE_USER");
     }
 
-    private boolean isBlank(String value) {
-        return Objects.isNull(value) || value.isBlank();
+    private boolean isBlank(String s) {
+        return s == null || s.isBlank();
     }
 }
-

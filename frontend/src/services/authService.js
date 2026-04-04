@@ -7,16 +7,22 @@ export async function register(credentials) {
 
 export async function login(credentials) {
   const response = await api.post("/api/auth/login", credentials);
-  return response.data;
+  const data = response.data;
+  if (data.token) {
+    localStorage.setItem("token", data.token);
+  }
+  return data;
 }
 
 export async function logout() {
-  const response = await api.post("/api/auth/logout");
-  return response.data;
+  try {
+    await api.post("/api/auth/logout");
+  } finally {
+    localStorage.removeItem("token");
+  }
 }
 
 export async function getCurrentUser() {
   const response = await api.get("/api/auth/me");
   return response.data;
 }
-

@@ -13,12 +13,19 @@ export function AuthProvider({ children }) {
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
   const refreshSession = useCallback(async () => {
+    // Skip the API call entirely if there is no token — JWT is stateless
+    if (!localStorage.getItem("token")) {
+      setUser(null);
+      setIsCheckingAuth(false);
+      return false;
+    }
     try {
       const currentUser = await getCurrentUser();
       setUser(currentUser?.username ? currentUser : null);
       return Boolean(currentUser?.username);
     } catch {
       setUser(null);
+      localStorage.removeItem("token"); // Token is invalid/expired — clean up
       return false;
     } finally {
       setIsCheckingAuth(false);
