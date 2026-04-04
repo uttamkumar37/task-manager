@@ -37,7 +37,13 @@ Frontend: `http://localhost:5173`
 Create `frontend/.env`:
 
 ```env
-VITE_API_BASE_URL=http://localhost:8080
+VITE_API_URL=http://localhost:8080
+```
+
+For production (Vercel), set:
+
+```env
+VITE_API_URL=https://<your-backend>.onrender.com
 ```
 
 ## Common Commands
@@ -111,6 +117,7 @@ Backend env overrides:
 export TASK_MANAGER_AUTH_USERNAME="myuser"
 export TASK_MANAGER_AUTH_PASSWORD="mypassword"
 export TASK_MANAGER_AUTH_ROLE="USER"
+export TASK_MANAGER_CORS_ALLOWED_ORIGINS="https://task-manager-ashen-nu-54.vercel.app"
 ```
 
 Auth endpoints:
@@ -146,5 +153,5 @@ curl -i -b cookies.txt http://localhost:8080/api/tasks
 ## Notes
 
 - H2 console: `http://localhost:8080/h2-console`
-- If frontend cannot call backend, verify `VITE_API_BASE_URL` and backend CORS settings in `backend/src/main/java/backend/security/SecurityConfig.java`
+- If frontend cannot call backend, verify `VITE_API_URL` and backend CORS settings in `backend/src/main/java/backend/security/SecurityConfig.java`
 - Backend-specific details are in `backend/README.md`; frontend-specific details are in `frontend/README.md`

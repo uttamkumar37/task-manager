@@ -23,7 +23,13 @@ Production-ready React (Vite) frontend for the Spring Boot backend in this repos
 Create `.env` in this folder (or copy from `.env.example`):
 
 ```env
-VITE_API_BASE_URL=http://localhost:8080
+VITE_API_URL=http://localhost:8080
+```
+
+Production example:
+
+```env
+VITE_API_URL=https://<your-backend>.onrender.com
 ```
 
 ## Run
