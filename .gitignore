@@ -11,12 +11,12 @@
 # Env
 .env
 .env.*
+!.env.example
 
 # Node
 node_modules/
 
 # Build outputs
-backend/target/
-frontend/dist/
-frontend/build/
-
+target/
+dist/
+build/

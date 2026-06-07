@@ -4,7 +4,7 @@ Production-ready React (Vite) frontend for the Spring Boot backend in this repos
 
 ## Features
 
-- Session-based authentication (`withCredentials: true`)
+- JWT authentication with `Authorization: Bearer <token>`
 - Login page with loading and error states
 - Protected dashboard route
 - Task CRUD (create, edit, delete)
@@ -53,4 +53,3 @@ Based on backend defaults in `backend/src/main/java/backend/security/SecurityCon
 
 - Username: `admin`
 - Password: `admin123`
-

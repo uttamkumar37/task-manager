@@ -16,7 +16,7 @@ Simple full-stack task manager with:
 ### 1) Run backend
 
 ```bash
-cd /Users/uttamkumar/uttam-all-data/01_github-projects/task-manager/backend
+cd backend
 mvn spring-boot:run
 ```
 
@@ -32,14 +32,14 @@ createdb -h localhost -p 5432 -O postgres taskdb
 Then start backend again:
 
 ```bash
-cd /Users/uttamkumar/uttam-all-data/01_github-projects/task-manager/backend
+cd backend
 mvn spring-boot:run
 ```
 
 ### 2) Run frontend
 
 ```bash
-cd /Users/uttamkumar/uttam-all-data/01_github-projects/task-manager/frontend
+cd frontend
 npm install
 npm run dev
 ```
@@ -65,7 +65,7 @@ VITE_API_BASE_URL=https://<your-backend>.onrender.com
 ### Backend
 
 ```bash
-cd /Users/uttamkumar/uttam-all-data/01_github-projects/task-manager/backend
+cd backend
 mvn test
 mvn clean package
 ```
@@ -73,7 +73,7 @@ mvn clean package
 ### Frontend
 
 ```bash
-cd /Users/uttamkumar/uttam-all-data/01_github-projects/task-manager/frontend
+cd frontend
 npm run build
 npm run preview
 ```
@@ -81,10 +81,9 @@ npm run preview
 ### Docker (optional)
 
 ```bash
-cd /Users/uttamkumar/uttam-all-data/01_github-projects/task-manager
-
 # first-time setup
 cp .env.example .env
+# edit placeholder values in .env before production use
 
 # backend change
 cd backend
@@ -116,21 +115,37 @@ docker compose down
 
 Root `.env` values used by Compose:
 
-- `DB_NAME`, `DB_USER`, `DB_PASSWORD`
+- `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`
+- `BACKEND_PORT`, `FRONTEND_PORT`
 - `TASK_MANAGER_AUTH_USERNAME`, `TASK_MANAGER_AUTH_PASSWORD`, `TASK_MANAGER_AUTH_ROLE`
 - `TASK_MANAGER_CORS_ALLOWED_ORIGINS`
 - `VITE_API_BASE_URL` (baked into frontend image at build time)
 - `JWT_SECRET`, `JWT_EXPIRATION_MS` (optional)
 
+## Continuous Integration
+
+GitHub Actions runs CI on pushes and pull requests to `main`.
+
+The workflow validates:
+- Backend tests with `mvn test`
+- Frontend install/build with `npm ci` and `npm run build`
+- Docker Compose configuration with `docker compose config`
+
+CI uses safe dummy environment values for Compose validation and does not require real secrets or a local PostgreSQL server. Backend tests use the repository test configuration, so `mvn test` remains self-contained.
+
+`npm audit` currently reports known moderate dev-tooling vulnerabilities in Vite/esbuild. They are tracked separately because the available npm fix requires a breaking major Vite upgrade.
+
 ## Authentication
 
-This project currently uses **session-based authentication**.
+This project uses **stateless JWT authentication**.
 
-- Login creates a server session
-- Browser stores `JSESSIONID` cookie
-- Frontend sends cookie automatically (`withCredentials: true`)
-- Protected endpoints require a valid session
-- New users can self-register and access only their own tasks
+- `POST /api/auth/register` creates a new user with `ROLE_USER`.
+- `POST /api/auth/login` validates credentials and returns a JWT in the response body as `token`.
+- The frontend stores that JWT in `localStorage`.
+- Axios attaches the token to API requests as `Authorization: Bearer <token>`.
+- Protected endpoints require a valid bearer token.
+- New users can self-register and access only their own tasks.
+- `POST /api/auth/logout` is client-side cleanup for JWT auth; the frontend removes the stored token.
 
 Default credentials (unless overridden with env vars):
 - Username: `admin`
@@ -153,7 +168,7 @@ Auth endpoints:
 
 ## API Endpoints
 
-Task endpoints:
+Task endpoints require `Authorization: Bearer <token>`:
 - `GET /api/tasks`
 - `GET /api/tasks/{id}`
 - `GET /api/tasks?status={status}`
@@ -165,14 +180,23 @@ Task endpoints:
 - `PATCH /api/tasks/{id}/pending`
 - `DELETE /api/tasks/{id}`
 
-## Quick API Check (with session cookie)
+Public/social endpoints:
+- `GET /api/public/visitors`
+- `POST /api/public/visitors/register`
+- `POST /api/public/messages`
+
+Authenticated message endpoint:
+- `GET /api/messages` (admin sees all messages; regular users see messages submitted while authenticated as themselves)
+
+## Quick API Check (with JWT)
 
 ```bash
-curl -i -c cookies.txt -X POST https://task-manager-backend-51pf.onrender.com/api/auth/login \
+TOKEN=$(curl -s -X POST http://localhost:8080/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"admin123"}'
+  -d '{"username":"admin","password":"admin123"}' | jq -r '.token')
 
-curl -i -b cookies.txt https://task-manager-backend-51pf.onrender.com/api/tasks
+curl -i http://localhost:8080/api/tasks \
+  -H "Authorization: Bearer ${TOKEN}"
 ```
 
 ## Notes

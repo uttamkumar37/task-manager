@@ -17,7 +17,7 @@ The backend includes a `Dockerfile` that runs the packaged Spring Boot jar.
 Build jar + Docker image:
 
 ```bash
-cd /Users/uttamkumar/uttam-all-data/01_github-projects/task-manager/backend
+cd backend
 mvn clean package
 docker build -t task-manager-backend:latest .
 ```
@@ -48,7 +48,7 @@ export TASK_MANAGER_AUTH_ROLE=USER
 Use this flow when you want to run only backend as one Docker container.
 
 ```bash
-cd /Users/uttamkumar/uttam-all-data/01_github-projects/task-manager/backend
+cd backend
 
 # Optional fresh cleanup (DANGER: removes unused Docker resources)
 docker system prune -a
@@ -90,14 +90,14 @@ The repo-level `docker-compose.yml` includes a `backend` service that builds thi
 Package the jar first (required by current `Dockerfile`):
 
 ```bash
-cd /Users/uttamkumar/uttam-all-data/01_github-projects/task-manager/backend
+cd backend
 mvn clean package
 ```
 
 Run with Compose:
 
 ```bash
-cd /Users/uttamkumar/uttam-all-data/01_github-projects/task-manager
+cd ..
 docker compose up --build
 ```
 
@@ -128,7 +128,7 @@ backend/
 3. Build once from terminal:
 
 ```bash
-cd /Users/uttamkumar/uttam-all-data/01_github-projects/task-manager/backend
+cd backend
 mvn clean package -DskipTests
 ```
 
@@ -137,11 +137,12 @@ mvn clean package -DskipTests
 6. Test API:
 
 ```bash
-curl -i -c cookies.txt -X POST http://localhost:8080/api/auth/login \
+TOKEN=$(curl -s -X POST http://localhost:8080/api/auth/login \
   -H 'Content-Type: application/json' \
-  -d '{"username":"admin","password":"admin123"}'
+  -d '{"username":"admin","password":"admin123"}' | jq -r '.token')
 
-curl -i -b cookies.txt http://localhost:8080/api/tasks
+curl -i http://localhost:8080/api/tasks \
+  -H "Authorization: Bearer ${TOKEN}"
 ```
 
 7. Stop app with IntelliJ **Stop** button.
@@ -162,7 +163,7 @@ Flow summary: `Code -> IntelliJ Run -> Spring Boot Start -> API -> Test`
 ## Run
 
 ```bash
-cd /Users/uttamkumar/uttam-all-data/01_github-projects/task-manager/backend
+cd backend
 mvn spring-boot:run
 ```
 
@@ -171,14 +172,14 @@ Server starts at `http://localhost:8080`.
 If `8080` is in use, run on `8081`:
 
 ```bash
-cd /Users/uttamkumar/uttam-all-data/01_github-projects/task-manager/backend
+cd backend
 mvn spring-boot:run -Dspring-boot.run.arguments=--server.port=8081
 ```
 
 ## Build check
 
 ```bash
-cd /Users/uttamkumar/uttam-all-data/01_github-projects/task-manager/backend
+cd backend
 mvn test
 ```
 
@@ -188,7 +189,7 @@ Authentication details are now documented in the root `README.md` under the **Au
 
 ## API endpoints
 
-All `/api/tasks/**` endpoints require an authenticated session.
+All `/api/tasks/**` endpoints require a valid JWT bearer token.
 
 ```text
 POST    /api/auth/register
@@ -216,33 +217,45 @@ GET     /api/tasks/stats
 ## Quick API test with curl
 
 ```bash
-curl -i -c cookies.txt -X POST https://task-manager-backend-51pf.onrender.com/api/auth/login \
+API_BASE=https://task-manager-backend-51pf.onrender.com
+TOKEN=$(curl -s -X POST "${API_BASE}/api/auth/login" \
   -H 'Content-Type: application/json' \
-  -d '{"username":"admin","password":"admin123"}'
+  -d '{"username":"admin","password":"admin123"}' | jq -r '.token')
 
-curl -i -b cookies.txt -X POST https://task-manager-backend-51pf.onrender.com/api/tasks \
+curl -i -X POST "${API_BASE}/api/tasks" \
+  -H "Authorization: Bearer ${TOKEN}" \
   -H 'Content-Type: application/json' \
   -d '{"title":"Learn Spring","description":"Build task APIs","status":"PENDING"}'
 
-curl -i -b cookies.txt https://task-manager-backend-51pf.onrender.com/api/tasks
+curl -i "${API_BASE}/api/tasks" \
+  -H "Authorization: Bearer ${TOKEN}"
 
-curl -i -b cookies.txt https://task-manager-backend-51pf.onrender.com/api/tasks/1
+curl -i "${API_BASE}/api/tasks/1" \
+  -H "Authorization: Bearer ${TOKEN}"
 
-curl -i -b cookies.txt -X PUT https://task-manager-backend-51pf.onrender.com/api/tasks/1 \
+curl -i -X PUT "${API_BASE}/api/tasks/1" \
+  -H "Authorization: Bearer ${TOKEN}" \
   -H 'Content-Type: application/json' \
   -d '{"title":"Learn Spring Boot","description":"CRUD done","status":"DONE"}'
 
-curl -i -b cookies.txt -X PATCH https://task-manager-backend-51pf.onrender.com/api/tasks/1/complete
+curl -i -X PATCH "${API_BASE}/api/tasks/1/complete" \
+  -H "Authorization: Bearer ${TOKEN}"
 
-curl -i -b cookies.txt -X PATCH https://task-manager-backend-51pf.onrender.com/api/tasks/1/pending
+curl -i -X PATCH "${API_BASE}/api/tasks/1/pending" \
+  -H "Authorization: Bearer ${TOKEN}"
 
-curl -i -b cookies.txt "https://task-manager-backend-51pf.onrender.com/api/tasks/search?keyword=spring"
+curl -i "${API_BASE}/api/tasks/search?keyword=spring" \
+  -H "Authorization: Bearer ${TOKEN}"
 
-curl -i -b cookies.txt "https://task-manager-backend-51pf.onrender.com/api/tasks?status=PENDING"
+curl -i "${API_BASE}/api/tasks?status=PENDING" \
+  -H "Authorization: Bearer ${TOKEN}"
 
-curl -i -b cookies.txt https://task-manager-backend-51pf.onrender.com/api/tasks/stats
+curl -i "${API_BASE}/api/tasks/stats" \
+  -H "Authorization: Bearer ${TOKEN}"
 
-curl -i -b cookies.txt -X DELETE https://task-manager-backend-51pf.onrender.com/api/tasks/1
+curl -i -X DELETE "${API_BASE}/api/tasks/1" \
+  -H "Authorization: Bearer ${TOKEN}"
 
-curl -i -b cookies.txt -X POST https://task-manager-backend-51pf.onrender.com/api/auth/logout
+curl -i -X POST "${API_BASE}/api/auth/logout" \
+  -H "Authorization: Bearer ${TOKEN}"
 ```

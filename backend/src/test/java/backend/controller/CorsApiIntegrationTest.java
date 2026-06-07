@@ -1,5 +1,6 @@
 package backend.controller;
 
+import backend.ApiIntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -16,7 +17,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @TestPropertySource(properties = {
         "app.cors.allowed-origins=http://localhost:5173,https://task-manager-backend-51pf.onrender.com"
 })
-class CorsApiIntegrationTest {
+class CorsApiIntegrationTest extends ApiIntegrationTest {
 
     @Autowired private MockMvc mockMvc;
 
@@ -44,4 +45,3 @@ class CorsApiIntegrationTest {
                 .andExpect(header().doesNotExist("Access-Control-Allow-Origin"));
     }
 }
-
