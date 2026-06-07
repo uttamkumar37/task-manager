@@ -1,5 +1,13 @@
 # Task Manager
 
+[![CI](https://github.com/uttamkumar37/task-manager/actions/workflows/ci.yml/badge.svg)](https://github.com/uttamkumar37/task-manager/actions/workflows/ci.yml)
+![Java 17](https://img.shields.io/badge/Java-17-007396?logo=openjdk&logoColor=white)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.3.4-6DB33F?logo=springboot&logoColor=white)
+![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-4169E1?logo=postgresql&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
+![JWT Auth](https://img.shields.io/badge/Auth-JWT-000000?logo=jsonwebtokens&logoColor=white)
+
 Simple full-stack task manager with:
 - Spring Boot backend (`backend/`)
 - React + Vite frontend (`frontend/`)
