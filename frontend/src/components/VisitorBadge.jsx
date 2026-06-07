@@ -3,7 +3,7 @@ import { getVisitorCount, registerVisitor } from "../services/publicService";
 
 const VISITOR_KEY = "task-manager-visitor-registered";
 
-function VisitorBadge() {
+function VisitorBadge({ variant = "fixed" }) {
   const [count, setCount] = useState(0);
 
   useEffect(() => {
@@ -22,11 +22,13 @@ function VisitorBadge() {
     return () => { mounted = false; };
   }, []);
 
+  const className =
+    variant === "inline"
+      ? "inline-flex h-10 items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 text-xs font-semibold text-slate-700 select-none"
+      : "fixed bottom-4 right-4 z-50 flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-lg select-none";
+
   return (
-    <div
-      title="Approximate unique visitors"
-      className="fixed top-3 right-4 z-50 flex items-center gap-1.5 bg-indigo-600 text-white text-xs font-semibold px-3 py-1.5 rounded-full shadow-lg select-none"
-    >
+    <div title="Approximate unique visitors" className={className}>
       <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
       {count} visitors
     </div>

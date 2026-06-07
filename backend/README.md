@@ -214,6 +214,24 @@ GET     /api/tasks?status={status}
 GET     /api/tasks/stats
 ```
 
+Task payloads support:
+
+```json
+{
+  "title": "Learn Spring",
+  "description": "Build task APIs",
+  "status": "TODO",
+  "priority": "MEDIUM",
+  "dueDate": "2026-06-30"
+}
+```
+
+Allowed statuses are `TODO`, `IN_PROGRESS`, `BLOCKED`, `WAITING_REVIEW`, `COMPLETED`, and `CANCELLED`.
+Legacy `PENDING` and `DONE` values are still accepted and returned as `TODO` and `COMPLETED`.
+
+Allowed priorities are `LOW`, `MEDIUM`, `HIGH`, and `URGENT`. If omitted, priority defaults to `MEDIUM`.
+`dueDate` is optional and uses `YYYY-MM-DD`.
+
 ## Quick API test with curl
 
 ```bash
@@ -225,7 +243,7 @@ TOKEN=$(curl -s -X POST "${API_BASE}/api/auth/login" \
 curl -i -X POST "${API_BASE}/api/tasks" \
   -H "Authorization: Bearer ${TOKEN}" \
   -H 'Content-Type: application/json' \
-  -d '{"title":"Learn Spring","description":"Build task APIs","status":"PENDING"}'
+  -d '{"title":"Learn Spring","description":"Build task APIs","status":"TODO","priority":"MEDIUM","dueDate":"2026-06-30"}'
 
 curl -i "${API_BASE}/api/tasks" \
   -H "Authorization: Bearer ${TOKEN}"
@@ -236,7 +254,7 @@ curl -i "${API_BASE}/api/tasks/1" \
 curl -i -X PUT "${API_BASE}/api/tasks/1" \
   -H "Authorization: Bearer ${TOKEN}" \
   -H 'Content-Type: application/json' \
-  -d '{"title":"Learn Spring Boot","description":"CRUD done","status":"DONE"}'
+  -d '{"title":"Learn Spring Boot","description":"CRUD done","status":"IN_PROGRESS","priority":"HIGH","dueDate":"2026-07-01"}'
 
 curl -i -X PATCH "${API_BASE}/api/tasks/1/complete" \
   -H "Authorization: Bearer ${TOKEN}"
@@ -247,7 +265,7 @@ curl -i -X PATCH "${API_BASE}/api/tasks/1/pending" \
 curl -i "${API_BASE}/api/tasks/search?keyword=spring" \
   -H "Authorization: Bearer ${TOKEN}"
 
-curl -i "${API_BASE}/api/tasks?status=PENDING" \
+curl -i "${API_BASE}/api/tasks?status=TODO" \
   -H "Authorization: Bearer ${TOKEN}"
 
 curl -i "${API_BASE}/api/tasks/stats" \

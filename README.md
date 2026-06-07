@@ -8,53 +8,110 @@
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
 ![JWT Auth](https://img.shields.io/badge/Auth-JWT-000000?logo=jsonwebtokens&logoColor=white)
 
-Simple full-stack task manager with:
-- Spring Boot backend (`backend/`)
-- React + Vite frontend (`frontend/`)
+A full-stack Task Manager built with Spring Boot, React, PostgreSQL, JWT authentication, and Docker Compose. Users can register, sign in, manage only their own tasks, track priority and due dates, and leave public social messages without mixing public data into private task data.
 
-## Prerequisites
+## Screenshots
 
-- Java 17+
-- Maven 3.9+
-- Node.js 18+
-- npm 9+
+| Login | Dashboard |
+| --- | --- |
+| ![Login screen](docs/screenshots/login.png) | ![Modern dashboard](docs/screenshots/dashboard.png) |
 
-## Quick Start
+| Task Drawer |
+| --- |
+| ![New task drawer](docs/screenshots/task-drawer.png) |
 
-### 1) Run backend
+## Tech Stack
+
+- **Backend:** Spring Boot 3.3.4, Java 17, Spring Security, JPA/Hibernate
+- **Database:** PostgreSQL 15
+- **Authentication:** Stateless JWT bearer tokens
+- **Frontend:** React 18, Vite, Axios, React Router, Tailwind CSS
+- **Deployment:** Docker Compose with PostgreSQL, backend, and frontend services
+- **CI:** GitHub Actions for backend tests, frontend build, and Compose validation
+
+## Key Features
+
+- JWT-based register/login flow with `Authorization: Bearer <token>`
+- Ownership-based task security: authenticated users only see and manage their own tasks
+- PostgreSQL persistence for tasks, visitor count, and public/social messages
+- Modern React dashboard with summary cards and progressive disclosure
+- Task statuses: `TODO`, `IN_PROGRESS`, `BLOCKED`, `WAITING_REVIEW`, `COMPLETED`, `CANCELLED`
+- Priority levels: `LOW`, `MEDIUM`, `HIGH`, `URGENT`
+- Optional due dates with overdue detection
+- Recent task preview, search, status filtering, overdue view, and high-priority view
+- Drawer-based create/edit task form with title suggestions
+- Compact task cards with quick completion and a More action menu
+- Public social message panel collapsed by default on the dashboard
+- Docker Compose setup for local full-stack runs
+- GitHub Actions CI workflow
+
+## Demo Login
+
+For local development, the backend seeds a default admin user unless overridden by environment variables.
+
+```text
+Username: admin
+Password: admin123
+```
+
+Environment overrides:
+
+```bash
+TASK_MANAGER_AUTH_USERNAME=myuser
+TASK_MANAGER_AUTH_PASSWORD=mypassword
+TASK_MANAGER_AUTH_ROLE=ROLE_ADMIN
+```
+
+## Run With Docker Compose
+
+Copy the safe example environment file and adjust values if needed:
+
+```bash
+cp .env.example .env
+```
+
+Start the full stack:
+
+```bash
+docker compose up -d --build
+```
+
+Default local URLs:
+
+- Frontend: `http://localhost:5173`
+- Backend: `http://localhost:8080`
+- PostgreSQL: `localhost:5432`
+
+Useful Docker commands:
+
+```bash
+docker compose ps
+docker compose logs -f
+docker compose down
+```
+
+To run on custom ports, set env values before starting Compose:
+
+```bash
+BACKEND_PORT=28080 \
+FRONTEND_PORT=25173 \
+VITE_API_BASE_URL=http://localhost:28080 \
+TASK_MANAGER_CORS_ALLOWED_ORIGINS=http://localhost:25173 \
+docker compose up -d --build
+```
+
+## Local Development
+
+### Backend
 
 ```bash
 cd backend
 mvn spring-boot:run
 ```
 
-Backend: `http://localhost:8080`
+Backend runs at `http://localhost:8080` by default.
 
-If backend startup fails with `FATAL: role "postgres" does not exist`, run this one-time local PostgreSQL setup:
-
-```bash
-psql -h localhost -p 5432 -d postgres -c "CREATE ROLE postgres WITH LOGIN SUPERUSER PASSWORD 'postgres123';"
-createdb -h localhost -p 5432 -O postgres taskdb
-```
-
-Then start backend again:
-
-```bash
-cd backend
-mvn spring-boot:run
-```
-
-### 2) Run frontend
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-Frontend: `http://localhost:5173`
-
-### 3) Frontend env
+### Frontend
 
 Create `frontend/.env`:
 
@@ -62,121 +119,39 @@ Create `frontend/.env`:
 VITE_API_BASE_URL=http://localhost:8080
 ```
 
-For production (Vercel), set:
-
-```env
-VITE_API_BASE_URL=https://<your-backend>.onrender.com
-```
-
-## Common Commands
-
-### Backend
-
-```bash
-cd backend
-mvn test
-mvn clean package
-```
-
-### Frontend
+Then run:
 
 ```bash
 cd frontend
-npm run build
-npm run preview
+npm install
+npm run dev
 ```
 
-### Docker (optional)
+Frontend runs at `http://localhost:5173` by default.
 
-```bash
-# first-time setup
-cp .env.example .env
-# edit placeholder values in .env before production use
+## Authentication Flow
 
-# backend change
-cd backend
-mvn clean package -DskipTests
-cd ..
-docker compose up -d --build backend
+This project uses stateless JWT authentication, not server sessions.
 
-# frontend change
-cd frontend
-npm run build
-cd ..
-docker compose up -d --build frontend
+- `POST /api/auth/register` creates a new `ROLE_USER`.
+- `POST /api/auth/login` returns a JWT as `token`.
+- The frontend stores the JWT in `localStorage`.
+- Axios attaches the JWT as `Authorization: Bearer <token>`.
+- Protected task APIs require a valid token.
+- Task queries are scoped to the authenticated username.
+- `POST /api/auth/logout` clears the local JWT on the client.
 
-# full rebuild
-docker compose up -d --build
-
-# verify
-docker ps
-
-# debug if needed
-docker compose logs -f
-
-# just restart
-docker compose down && docker compose up -d
-
-# stop
-docker compose down
-```
-
-Root `.env` values used by Compose:
-
-- `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`
-- `BACKEND_PORT`, `FRONTEND_PORT`
-- `TASK_MANAGER_AUTH_USERNAME`, `TASK_MANAGER_AUTH_PASSWORD`, `TASK_MANAGER_AUTH_ROLE`
-- `TASK_MANAGER_CORS_ALLOWED_ORIGINS`
-- `VITE_API_BASE_URL` (baked into frontend image at build time)
-- `JWT_SECRET`, `JWT_EXPIRATION_MS` (optional)
-
-## Continuous Integration
-
-GitHub Actions runs CI on pushes and pull requests to `main`.
-
-The workflow validates:
-- Backend tests with `mvn test`
-- Frontend install/build with `npm ci` and `npm run build`
-- Docker Compose configuration with `docker compose config`
-
-CI uses safe dummy environment values for Compose validation and does not require real secrets or a local PostgreSQL server. Backend tests use the repository test configuration, so `mvn test` remains self-contained.
-
-`npm audit` currently reports known moderate dev-tooling vulnerabilities in Vite/esbuild. They are tracked separately because the available npm fix requires a breaking major Vite upgrade.
-
-## Authentication
-
-This project uses **stateless JWT authentication**.
-
-- `POST /api/auth/register` creates a new user with `ROLE_USER`.
-- `POST /api/auth/login` validates credentials and returns a JWT in the response body as `token`.
-- The frontend stores that JWT in `localStorage`.
-- Axios attaches the token to API requests as `Authorization: Bearer <token>`.
-- Protected endpoints require a valid bearer token.
-- New users can self-register and access only their own tasks.
-- `POST /api/auth/logout` is client-side cleanup for JWT auth; the frontend removes the stored token.
-
-Default credentials (unless overridden with env vars):
-- Username: `admin`
-- Password: `admin123`
-
-Backend env overrides:
-
-```bash
-export TASK_MANAGER_AUTH_USERNAME="myuser"
-export TASK_MANAGER_AUTH_PASSWORD="mypassword"
-export TASK_MANAGER_AUTH_ROLE="USER"
-export TASK_MANAGER_CORS_ALLOWED_ORIGINS="https://task-manager-ashen-nu-54.vercel.app"
-```
+## API Overview
 
 Auth endpoints:
+
 - `POST /api/auth/register`
 - `POST /api/auth/login`
 - `POST /api/auth/logout`
 - `GET /api/auth/me`
 
-## API Endpoints
+Protected task endpoints:
 
-Task endpoints require `Authorization: Bearer <token>`:
 - `GET /api/tasks`
 - `GET /api/tasks/{id}`
 - `GET /api/tasks?status={status}`
@@ -188,15 +163,29 @@ Task endpoints require `Authorization: Bearer <token>`:
 - `PATCH /api/tasks/{id}/pending`
 - `DELETE /api/tasks/{id}`
 
+Task payload fields:
+
+- `title`: required, minimum 3 characters
+- `description`: optional, maximum 2000 characters
+- `status`: `TODO`, `IN_PROGRESS`, `BLOCKED`, `WAITING_REVIEW`, `COMPLETED`, or `CANCELLED`
+- `priority`: `LOW`, `MEDIUM`, `HIGH`, or `URGENT`; defaults to `MEDIUM`
+- `dueDate`: optional ISO date, for example `2026-06-30`
+
+Legacy status compatibility:
+
+- `PENDING` maps to `TODO`
+- `DONE` maps to `COMPLETED`
+
 Public/social endpoints:
+
 - `GET /api/public/visitors`
 - `POST /api/public/visitors/register`
 - `POST /api/public/messages`
+- `GET /api/messages` for authenticated users
 
-Authenticated message endpoint:
-- `GET /api/messages` (admin sees all messages; regular users see messages submitted while authenticated as themselves)
+Admin users can see all messages. Regular users see messages submitted while authenticated as themselves.
 
-## Quick API Check (with JWT)
+## Quick API Check
 
 ```bash
 TOKEN=$(curl -s -X POST http://localhost:8080/api/auth/login \
@@ -207,9 +196,58 @@ curl -i http://localhost:8080/api/tasks \
   -H "Authorization: Bearer ${TOKEN}"
 ```
 
+## Tests And Builds
+
+Backend:
+
+```bash
+cd backend
+mvn test
+mvn clean package
+```
+
+Frontend:
+
+```bash
+cd frontend
+npm ci
+npm run build
+```
+
+Docker validation:
+
+```bash
+docker compose config
+```
+
+## Continuous Integration
+
+GitHub Actions runs on pushes and pull requests to `main`.
+
+The CI workflow validates:
+
+- Backend tests with `mvn test`
+- Frontend install/build with `npm ci` and `npm run build`
+- Docker Compose configuration with `docker compose config`
+
+CI uses safe dummy environment values and does not require real secrets. Backend tests use the repository test configuration, so `mvn test` does not require a local PostgreSQL server.
+
+## Known NPM Audit Note
+
+`npm audit` currently reports known moderate dev-tooling vulnerabilities in Vite/esbuild. They are tracked separately because the available npm fix requires a breaking major Vite upgrade. The project intentionally avoids `npm audit fix --force` until that upgrade can be tested safely.
+
+## Future Improvements
+
+- Add end-to-end tests for login, task creation, filters, and social messages
+- Add pagination or infinite scroll for large task lists
+- Add task labels or project grouping
+- Add profile settings and password change flow
+- Add production database migrations with Flyway or Liquibase
+- Add refresh-token or token-rotation support for longer-lived sessions
+- Add deployment-specific screenshots and live demo links
+
 ## Notes
 
-- Database: PostgreSQL only (configured in `docker-compose.yml` and backend `application.properties`)
-- Frontend API backend: `https://task-manager-backend-51pf.onrender.com` (set `VITE_API_BASE_URL` in `.env` to override)
-- If frontend cannot call backend, verify `VITE_API_BASE_URL` and backend CORS settings in `backend/src/main/java/backend/security/SecurityConfig.java`
-- Backend-specific details are in `backend/README.md`; frontend-specific details are in `frontend/README.md`
+- Backend-specific details are in `backend/README.md`.
+- Frontend-specific details are in `frontend/README.md`.
+- Production secrets should be provided through environment variables, not committed files.

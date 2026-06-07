@@ -3,22 +3,32 @@ import { toApiError } from "../services/api";
 import { getMessages, leaveMessage } from "../services/publicService";
 
 const profiles = [
-  { label: "GitHub", url: "https://github.com/uttamkumar37", color: "bg-slate-800 text-white hover:bg-slate-700" },
-  { label: "LinkedIn", url: "https://www.linkedin.com/in/uttamkumar37", color: "bg-blue-600 text-white hover:bg-blue-700" },
-  { label: "Instagram", url: "https://www.instagram.com/uttam_iitg", color: "bg-pink-500 text-white hover:bg-pink-600" },
+  { label: "GitHub", url: "https://github.com/uttamkumar37", color: "border-slate-300 text-slate-700 hover:bg-slate-50" },
+  { label: "LinkedIn", url: "https://www.linkedin.com/in/uttamkumar37", color: "border-blue-200 text-blue-700 hover:bg-blue-50" },
+  { label: "Instagram", url: "https://www.instagram.com/uttam__gaurav", color: "border-pink-200 text-pink-700 hover:bg-pink-50" },
 ];
 
 const inputCls =
-  "w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 placeholder-slate-400 " +
-  "focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-300 focus:bg-white transition";
+  "w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-800 placeholder-slate-400 " +
+  "focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 focus:bg-white transition";
 
-function SocialConnectPanel({ defaultName = "", user = null }) {
+function messageCountLabel(count) {
+  return `${count} public ${count === 1 ? "message" : "messages"}`;
+}
+
+function SocialConnectPanel({ defaultName = "", user = null, isOpen, onOpenChange }) {
   const [formData, setFormData] = useState({ name: defaultName, socialHandle: "", message: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [messages, setMessages] = useState([]);
+  const [internalOpen, setInternalOpen] = useState(false);
 
+  const expanded = typeof isOpen === "boolean" ? isOpen : internalOpen;
+  const setExpanded = (nextValue) => {
+    if (onOpenChange) onOpenChange(nextValue);
+    else setInternalOpen(nextValue);
+  };
   const isAdmin = user?.role === "ROLE_ADMIN";
 
   useEffect(() => {
@@ -31,13 +41,13 @@ function SocialConnectPanel({ defaultName = "", user = null }) {
     try {
       setMessages(await getMessages());
     } catch {
-      // silently ignore — messages list is optional
+      // The dashboard remains usable when the optional public message feed is unavailable.
     }
   }
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((p) => ({ ...p, [name]: value }));
+    setFormData((previous) => ({ ...previous, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
@@ -45,14 +55,15 @@ function SocialConnectPanel({ defaultName = "", user = null }) {
     setError("");
     setSuccess("");
     setIsSubmitting(true);
+
     try {
       await leaveMessage({
         name: formData.name.trim(),
         socialHandle: formData.socialHandle.trim(),
         message: formData.message.trim(),
       });
-      setSuccess("Message sent — thank you!");
-      setFormData((p) => ({ ...p, socialHandle: "", message: "" }));
+      setSuccess("Message sent. Thank you!");
+      setFormData((previous) => ({ ...previous, socialHandle: "", message: "" }));
       await loadMessages();
     } catch (err) {
       setError(toApiError(err, "Unable to send message").message);
@@ -61,59 +72,95 @@ function SocialConnectPanel({ defaultName = "", user = null }) {
     }
   };
 
-  return (
-    <section className="bg-white border border-slate-200 rounded-2xl shadow-sm p-5 mt-4">
-      {/* Header row */}
-      <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
-        <div>
-          <h2 className="text-sm font-bold text-slate-700">Connect with me</h2>
-          <p className="text-xs text-slate-400 mt-0.5">Say hello or find me on social</p>
+  if (!expanded) {
+    return (
+      <section id="social-messages" className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase text-blue-600">Social Messages</p>
+            <h2 className="mt-1 text-base font-bold text-slate-900">{messageCountLabel(messages.length)}</h2>
+            <p className="mt-1 text-sm text-slate-500">Public messages stay separate from private tasks.</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setExpanded(true)}
+            className="inline-flex h-10 items-center justify-center rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          >
+            Open Messages
+          </button>
         </div>
-        <div className="flex gap-2">
-          {profiles.map((p) => (
+      </section>
+    );
+  }
+
+  return (
+    <section id="social-messages" className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div>
+          <p className="text-xs font-semibold uppercase text-blue-600">Social Messages</p>
+          <h2 className="mt-1 text-base font-bold text-slate-900">{messageCountLabel(messages.length)}</h2>
+          <p className="mt-1 text-sm text-slate-500">Public notes and profile links stay separate from private tasks.</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {profiles.map((profile) => (
             <a
-              key={p.label}
-              href={p.url}
+              key={profile.label}
+              href={profile.url}
               target="_blank"
               rel="noreferrer"
-              className={`text-xs font-semibold px-3 py-1.5 rounded-full transition ${p.color}`}
+              className={`rounded-lg border bg-white px-3 py-2 text-xs font-semibold transition ${profile.color}`}
             >
-              {p.label}
+              {profile.label}
             </a>
           ))}
+          <button
+            type="button"
+            onClick={() => setExpanded(false)}
+            className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-100"
+          >
+            Close
+          </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        {/* Message wall */}
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_420px]">
         {user && (
-          <div>
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
-              {isAdmin ? `All messages (${messages.length})` : "Your messages"}
-            </p>
+          <div className="min-w-0">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <p className="text-xs font-semibold uppercase text-slate-500">
+                {isAdmin ? `All messages (${messages.length})` : "Your messages"}
+              </p>
+            </div>
+
             {messages.length === 0 ? (
-              <p className="text-xs text-slate-400 italic">No messages yet.</p>
+              <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center">
+                <p className="text-sm font-semibold text-slate-700">No messages yet</p>
+                <p className="mt-1 text-sm text-slate-500">Messages submitted from this panel will appear here.</p>
+              </div>
             ) : (
-              <div className="flex flex-col gap-2 max-h-44 overflow-y-auto pr-1">
-                {messages.map((msg, i) => (
-                  <div key={i} className="bg-slate-50 border border-slate-200 rounded-lg p-3">
-                    <p className="text-xs font-semibold text-slate-700">
-                      {msg.name}
-                      {msg.socialHandle && <span className="font-normal text-slate-400"> · {msg.socialHandle}</span>}
-                      {isAdmin && msg.submittedBy && <span className="font-normal text-indigo-400"> · @{msg.submittedBy}</span>}
-                    </p>
-                    <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">{msg.message}</p>
-                  </div>
+              <div className="grid max-h-72 gap-2 overflow-y-auto pr-1">
+                {messages.map((msg, index) => (
+                  <article key={msg.id || `${msg.name}-${index}`} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                      <p className="text-sm font-semibold text-slate-800">{msg.name}</p>
+                      {msg.socialHandle && <span className="text-xs font-medium text-slate-500">{msg.socialHandle}</span>}
+                      {isAdmin && msg.submittedBy && (
+                        <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700">
+                          @{msg.submittedBy}
+                        </span>
+                      )}
+                    </div>
+                    <p className="mt-1.5 break-words text-sm leading-relaxed text-slate-600">{msg.message}</p>
+                  </article>
                 ))}
               </div>
             )}
           </div>
         )}
 
-        {/* Leave a message form */}
-        <form onSubmit={handleSubmit} className="flex flex-col gap-2">
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Leave a message</p>
-          <div className="grid grid-cols-2 gap-2">
+        <form onSubmit={handleSubmit} className="flex min-w-0 flex-col gap-3">
+          <p className="text-xs font-semibold uppercase text-slate-500">Leave a message</p>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <input
               name="name"
               value={formData.name}
@@ -126,7 +173,7 @@ function SocialConnectPanel({ defaultName = "", user = null }) {
               name="socialHandle"
               value={formData.socialHandle}
               onChange={handleChange}
-              placeholder="@handle (optional)"
+              placeholder="@handle optional"
               className={inputCls}
             />
           </div>
@@ -135,24 +182,22 @@ function SocialConnectPanel({ defaultName = "", user = null }) {
             value={formData.message}
             onChange={handleChange}
             required
-            placeholder="Write something…"
-            rows={2}
-            className={inputCls + " resize-none"}
+            placeholder="Write a short public message"
+            rows={3}
+            className={`${inputCls} resize-none`}
           />
-          {error && (
-            <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{error}</p>
-          )}
+          {error && <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-700">{error}</p>}
           {success && (
-            <p className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">
+            <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700">
               {success}
             </p>
           )}
           <button
             type="submit"
             disabled={isSubmitting}
-            className="self-start bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition disabled:opacity-50"
+            className="inline-flex h-10 items-center justify-center rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {isSubmitting ? "Sending…" : "Send Message"}
+            {isSubmitting ? "Sending..." : "Send Message"}
           </button>
         </form>
       </div>

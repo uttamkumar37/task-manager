@@ -15,15 +15,20 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
 
 	List<Task> findByOwnerUsernameAndStatusOrderByCreatedAtDesc(String ownerUsername, String status);
 
+	List<Task> findByOwnerUsernameAndStatusInOrderByCreatedAtDesc(String ownerUsername, List<String> statuses);
+
 	java.util.Optional<Task> findByIdAndOwnerUsername(Long id, String ownerUsername);
 
 	@Query("SELECT t FROM Task t WHERE t.ownerUsername = :ownerUsername AND (" +
 			"LOWER(t.title) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
-			"OR LOWER(COALESCE(t.description, '')) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+			"OR LOWER(COALESCE(t.description, '')) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+			"OR LOWER(t.status) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+			"OR LOWER(COALESCE(t.priority, '')) LIKE LOWER(CONCAT('%', :keyword, '%')))")
 	List<Task> searchByKeyword(@Param("ownerUsername") String ownerUsername, @Param("keyword") String keyword);
 
 	long countByOwnerUsername(String ownerUsername);
 
 	long countByOwnerUsernameAndStatus(String ownerUsername, String status);
-}
 
+	long countByOwnerUsernameAndStatusIn(String ownerUsername, List<String> statuses);
+}

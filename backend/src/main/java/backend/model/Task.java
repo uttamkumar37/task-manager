@@ -10,6 +10,7 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
 
+import java.time.LocalDate;
 import java.util.Date;
 
 @Entity
@@ -29,9 +30,13 @@ public class Task {
     @Column(nullable = false)
     private String ownerUsername;
 
-    // Allowed values: PENDING / DONE
+    // Allowed values are normalized by TaskService.
     @Column(nullable = false)
     private String status;
+
+    private String priority;
+
+    private LocalDate dueDate;
 
     @Temporal(TemporalType.TIMESTAMP)
     @Column(nullable = false, updatable = false)
@@ -40,12 +45,14 @@ public class Task {
     public Task() {
     }
 
-    public Task(Long id, String title, String description, String ownerUsername, String status, Date createdAt) {
+    public Task(Long id, String title, String description, String ownerUsername, String status, String priority, LocalDate dueDate, Date createdAt) {
         this.id = id;
         this.title = title;
         this.description = description;
         this.ownerUsername = ownerUsername;
         this.status = status;
+        this.priority = priority;
+        this.dueDate = dueDate;
         this.createdAt = createdAt;
     }
 
@@ -53,6 +60,12 @@ public class Task {
     protected void onCreate() {
         if (this.createdAt == null) {
             this.createdAt = new Date();
+        }
+        if (this.status == null || this.status.isBlank()) {
+            this.status = "TODO";
+        }
+        if (this.priority == null || this.priority.isBlank()) {
+            this.priority = "MEDIUM";
         }
     }
 
@@ -96,6 +109,22 @@ public class Task {
         this.status = status;
     }
 
+    public String getPriority() {
+        return priority;
+    }
+
+    public void setPriority(String priority) {
+        this.priority = priority;
+    }
+
+    public LocalDate getDueDate() {
+        return dueDate;
+    }
+
+    public void setDueDate(LocalDate dueDate) {
+        this.dueDate = dueDate;
+    }
+
     public Date getCreatedAt() {
         return createdAt;
     }
@@ -104,4 +133,3 @@ public class Task {
         this.createdAt = createdAt;
     }
 }
-

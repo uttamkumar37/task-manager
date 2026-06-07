@@ -4,6 +4,7 @@ import backend.ApiIntegrationTest;
 import backend.repository.TaskRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,13 +45,35 @@ class TaskControllerApiIntegrationTest extends ApiIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(id))
                 .andExpect(jsonPath("$.title").value("Learn Spring"))
-                .andExpect(jsonPath("$.status").value("PENDING"));
+                .andExpect(jsonPath("$.status").value("TODO"))
+                .andExpect(jsonPath("$.priority").value("MEDIUM"));
+    }
+
+    @Test
+    void createWithPriorityAndDueDate_shouldReturnFields() throws Exception {
+        mockMvc.perform(post("/api/tasks")
+                        .header("Authorization", "Bearer " + authToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "title": "Deployment checklist",
+                                  "description": "Prepare release notes",
+                                  "status": "IN_PROGRESS",
+                                  "priority": "URGENT",
+                                  "dueDate": "2026-06-30"
+                                }
+                                """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.title").value("Deployment checklist"))
+                .andExpect(jsonPath("$.status").value("IN_PROGRESS"))
+                .andExpect(jsonPath("$.priority").value("URGENT"))
+                .andExpect(jsonPath("$.dueDate").value("2026-06-30"));
     }
 
     @Test
     void getAll_shouldReturnAllCreatedTasks() throws Exception {
-        createTask("T1", "D1", "PENDING");
-        createTask("T2", "D2", "DONE");
+        createTask("Task one", "D1", "PENDING");
+        createTask("Task two", "D2", "DONE");
 
         mockMvc.perform(get("/api/tasks").header("Authorization", "Bearer " + authToken))
                 .andExpect(status().isOk())
@@ -65,12 +88,20 @@ class TaskControllerApiIntegrationTest extends ApiIntegrationTest {
                         .header("Authorization", "Bearer " + authToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"title":"New title","description":"New desc","status":"DONE"}
+                                {
+                                  "title": "New title",
+                                  "description": "New desc",
+                                  "status": "IN_PROGRESS",
+                                  "priority": "HIGH",
+                                  "dueDate": "2026-07-01"
+                                }
                                 """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(id))
                 .andExpect(jsonPath("$.title").value("New title"))
-                .andExpect(jsonPath("$.status").value("DONE"));
+                .andExpect(jsonPath("$.status").value("IN_PROGRESS"))
+                .andExpect(jsonPath("$.priority").value("HIGH"))
+                .andExpect(jsonPath("$.dueDate").value("2026-07-01"));
     }
 
     @Test
@@ -86,57 +117,84 @@ class TaskControllerApiIntegrationTest extends ApiIntegrationTest {
 
     @Test
     void patchCompleteAndPending_shouldToggleStatus() throws Exception {
-        long id = createTask("Toggle", "Toggle status", "PENDING");
+        long id = createTask("Toggle status", "Toggle status", "PENDING");
 
         mockMvc.perform(patch("/api/tasks/{id}/complete", id).header("Authorization", "Bearer " + authToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("DONE"));
+                .andExpect(jsonPath("$.status").value("COMPLETED"));
 
         mockMvc.perform(patch("/api/tasks/{id}/pending", id).header("Authorization", "Bearer " + authToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("PENDING"));
+                .andExpect(jsonPath("$.status").value("TODO"));
     }
 
     @Test
-    void search_shouldReturnTasksMatchingKeywordInTitleOrDescription() throws Exception {
+    void search_shouldReturnTasksMatchingKeywordInTitleDescriptionStatusOrPriority() throws Exception {
         createTask("Learn Java", "Streams", "PENDING");
-        createTask("Shopping", "Buy milk and bread", "DONE");
-        createTask("Workout", "Morning cardio", "PENDING");
+        createTask("Shopping list", "Buy milk and bread", "DONE", "HIGH", null);
+        createTask("Workout plan", "Morning cardio", "IN_PROGRESS");
 
-        mockMvc.perform(get("/api/tasks/search").header("Authorization", "Bearer " + authToken).param("keyword", "milk"))
+        mockMvc.perform(get("/api/tasks/search").header("Authorization", "Bearer " + authToken).param("keyword", "high"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].title").value("Shopping"));
+                .andExpect(jsonPath("$[0].title").value("Shopping list"));
     }
 
     @Test
-    void getByStatus_shouldFilterTasks() throws Exception {
-        createTask("P1", "Pending 1", "PENDING");
-        createTask("D1", "Done 1", "DONE");
-        createTask("P2", "Pending 2", "PENDING");
+    void getByStatus_shouldFilterTasksIncludingLegacyValues() throws Exception {
+        createTask("Pending legacy", "Pending 1", "PENDING");
+        createTask("Done legacy", "Done 1", "DONE");
+        createTask("Todo modern", "Pending 2", "TODO");
 
-        mockMvc.perform(get("/api/tasks").header("Authorization", "Bearer " + authToken).param("status", "PENDING"))
+        mockMvc.perform(get("/api/tasks").header("Authorization", "Bearer " + authToken).param("status", "TODO"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(2)))
-                .andExpect(jsonPath("$[0].status").value("PENDING"));
+                .andExpect(jsonPath("$[0].status").value("TODO"));
     }
 
     @Test
-    void stats_shouldReturnTotalPendingAndDoneCounts() throws Exception {
-        createTask("P1", "Pending 1", "PENDING");
-        createTask("D1", "Done 1", "DONE");
-        createTask("P2", "Pending 2", "PENDING");
+    void stats_shouldReturnModernAndLegacyCounts() throws Exception {
+        createTask("Pending legacy", "Pending 1", "PENDING");
+        createTask("In progress task", "Active", "IN_PROGRESS");
+        createTask("Done legacy", "Done 1", "DONE");
+        createTask("Blocked task", "Waiting", "BLOCKED");
 
         mockMvc.perform(get("/api/tasks/stats").header("Authorization", "Bearer " + authToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.total").value(3))
-                .andExpect(jsonPath("$.pending").value(2))
+                .andExpect(jsonPath("$.total").value(4))
+                .andExpect(jsonPath("$.todo").value(1))
+                .andExpect(jsonPath("$.inProgress").value(1))
+                .andExpect(jsonPath("$.blocked").value(1))
+                .andExpect(jsonPath("$.completed").value(1))
+                .andExpect(jsonPath("$.pending").value(1))
                 .andExpect(jsonPath("$.done").value(1));
     }
 
     @Test
     void invalidStatusFilter_shouldReturnBadRequest() throws Exception {
-        mockMvc.perform(get("/api/tasks").header("Authorization", "Bearer " + authToken).param("status", "IN_PROGRESS"))
+        mockMvc.perform(get("/api/tasks").header("Authorization", "Bearer " + authToken).param("status", "NOT_A_STATUS"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void invalidPriority_shouldReturnBadRequest() throws Exception {
+        mockMvc.perform(post("/api/tasks")
+                        .header("Authorization", "Bearer " + authToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"title":"Invalid priority","description":"Bad priority","status":"TODO","priority":"CRITICAL"}
+                                """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void shortTitle_shouldReturnBadRequest() throws Exception {
+        mockMvc.perform(post("/api/tasks")
+                        .header("Authorization", "Bearer " + authToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"title":"AB","description":"Too short","status":"TODO","priority":"MEDIUM"}
+                                """))
                 .andExpect(status().isBadRequest());
     }
 
@@ -154,7 +212,7 @@ class TaskControllerApiIntegrationTest extends ApiIntegrationTest {
 
     @Test
     void userShouldNotAccessAnotherUsersTask() throws Exception {
-        long ownerTaskId = createTask("Private", "Only mine", "PENDING");
+        long ownerTaskId = createTask("Private task", "Only mine", "PENDING");
 
         String secondUsername = "other_" + System.nanoTime();
         register(secondUsername, "pass123");
@@ -170,15 +228,28 @@ class TaskControllerApiIntegrationTest extends ApiIntegrationTest {
                 .andExpect(status().isUnauthorized());
     }
 
-    // ── helpers ──────────────────────────────────────────────────────────────
+    // Helpers
 
     private long createTask(String title, String description, String statusValue) throws Exception {
+        return createTask(title, description, statusValue, null, null);
+    }
+
+    private long createTask(String title, String description, String statusValue, String priority, String dueDate) throws Exception {
+        ObjectNode payload = objectMapper.createObjectNode();
+        payload.put("title", title);
+        payload.put("description", description);
+        payload.put("status", statusValue);
+        if (priority != null) {
+            payload.put("priority", priority);
+        }
+        if (dueDate != null) {
+            payload.put("dueDate", dueDate);
+        }
+
         MvcResult result = mockMvc.perform(post("/api/tasks")
                         .header("Authorization", "Bearer " + authToken)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {"title":"%s","description":"%s","status":"%s"}
-                                """.formatted(title, description, statusValue)))
+                        .content(objectMapper.writeValueAsString(payload)))
                 .andExpect(status().isCreated())
                 .andReturn();
 

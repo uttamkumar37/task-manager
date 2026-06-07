@@ -1,5 +1,6 @@
 package backend.dto;
 
+import java.time.LocalDate;
 import java.util.Date;
 
 public class TaskDTO {
@@ -8,16 +9,20 @@ public class TaskDTO {
     private String title;
     private String description;
     private String status;
+    private String priority;
+    private LocalDate dueDate;
     private Date createdAt;
 
     public TaskDTO() {
     }
 
-    public TaskDTO(Long id, String title, String description, String status, Date createdAt) {
+    public TaskDTO(Long id, String title, String description, String status, String priority, LocalDate dueDate, Date createdAt) {
         this.id = id;
         this.title = title;
         this.description = description;
         this.status = status;
+        this.priority = priority;
+        this.dueDate = dueDate;
         this.createdAt = createdAt;
     }
 
@@ -53,6 +58,22 @@ public class TaskDTO {
         this.status = status;
     }
 
+    public String getPriority() {
+        return priority;
+    }
+
+    public void setPriority(String priority) {
+        this.priority = priority;
+    }
+
+    public LocalDate getDueDate() {
+        return dueDate;
+    }
+
+    public void setDueDate(LocalDate dueDate) {
+        this.dueDate = dueDate;
+    }
+
     public Date getCreatedAt() {
         return createdAt;
     }
@@ -61,4 +82,3 @@ public class TaskDTO {
         this.createdAt = createdAt;
     }
 }
-

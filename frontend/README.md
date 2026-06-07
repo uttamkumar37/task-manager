@@ -7,8 +7,10 @@ Production-ready React (Vite) frontend for the Spring Boot backend in this repos
 - JWT authentication with `Authorization: Bearer <token>`
 - Login page with loading and error states
 - Protected dashboard route
-- Task CRUD (create, edit, delete)
-- Status filter (`ALL`, `PENDING`, `DONE`)
+- Task CRUD (create, edit, delete, quick status updates)
+- Professional task statuses (`TODO`, `IN_PROGRESS`, `BLOCKED`, `WAITING_REVIEW`, `COMPLETED`, `CANCELLED`)
+- Priority and optional due date fields
+- Client-side search plus status, overdue, and high-priority filters
 - Global Axios error handling via interceptors
 
 ## Tech Stack

@@ -65,12 +65,12 @@ public class TaskController {
 
     @PatchMapping("/{id}/complete")
     public ResponseEntity<TaskDTO> markTaskComplete(@PathVariable Long id, Authentication authentication) {
-        return ResponseEntity.ok(taskService.setTaskStatus(id, "DONE", authentication.getName()));
+        return ResponseEntity.ok(taskService.setTaskStatus(id, "COMPLETED", authentication.getName()));
     }
 
     @PatchMapping("/{id}/pending")
     public ResponseEntity<TaskDTO> markTaskPending(@PathVariable Long id, Authentication authentication) {
-        return ResponseEntity.ok(taskService.setTaskStatus(id, "PENDING", authentication.getName()));
+        return ResponseEntity.ok(taskService.setTaskStatus(id, "TODO", authentication.getName()));
     }
 
     @GetMapping("/search")
@@ -83,4 +83,3 @@ public class TaskController {
         return ResponseEntity.ok(taskService.getTaskStats(authentication.getName()));
     }
 }
-

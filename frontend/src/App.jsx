@@ -1,15 +1,15 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
-import VisitorBadge from "./components/VisitorBadge.jsx";
 import DashboardPage from "./pages/DashboardPage.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
 
 function App() {
   return (
     <>
-      <VisitorBadge />
       <Routes>
         <Route path="/" element={<LoginPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<LoginPage initialMode="register" />} />
         <Route
           path="/dashboard"
           element={
@@ -25,4 +25,3 @@ function App() {
 }
 
 export default App;
-
